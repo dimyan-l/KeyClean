@@ -6,8 +6,14 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-swift build -c release
-BIN="$(swift build -c release --show-bin-path)/KeyClean"
+# Universal: Apple Silicon и Intel. Если так собрать не вышло, собираем под этот Mac.
+ARCHS=(--arch arm64 --arch x86_64)
+if ! swift build -c release "${ARCHS[@]}"; then
+  echo "→ Universal не собрался, собираю под текущий Mac"
+  ARCHS=()
+  swift build -c release
+fi
+BIN="$(swift build -c release ${ARCHS[@]+"${ARCHS[@]}"} --show-bin-path)/KeyClean"
 
 # Значок рисуем один раз: он лежит в Resources и не меняется от сборки к сборке.
 if [[ ! -f Resources/AppIcon.icns ]]; then
